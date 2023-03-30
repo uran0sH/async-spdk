@@ -112,11 +112,21 @@ fn build_from_source() {
     assert!(status.success(), "failed to configure: {}", status);
 
     // make
+    #[cfg(target_arch = "aarch64")]
     let status = Command::new("make")
-        .current_dir(&src)
+        .current_dir(&src) 
+        .arg("DPDKBUILD_FLAGS=\"-Dplatform=generic\"")
+        .arg(&format!("-j{}", env::var("NUM_JOBS").unwrap()))
+        .status()
+        .expect("failed to make");  
+
+    #[cfg(not(target_arch = "aarch64"))]
+    let status = Command::new("make")
+        .current_dir(&src)  
         .arg(&format!("-j{}", env::var("NUM_JOBS").unwrap()))
         .status()
         .expect("failed to make");
+
     assert!(status.success(), "failed to make: {}", status);
 
     // link all shared libraries into 'libspdk_fat.so'
